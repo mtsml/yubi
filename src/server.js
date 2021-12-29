@@ -13,10 +13,21 @@ const server = app.listen(port, () => {
     console.log(`server is running on port ${port}`)
 });
 
+const LOGIN = 'LOGIN';
+const UPDATE = 'UPDATE';
+
 const io = socket(server, {
   transports: ['websocket']
 });
 
 io.on('connection', (socket) => {
   console.log('connection');
+
+  socket.on(LOGIN, (data) => {
+    console.log(LOGIN, data)
+    const { name, room } = data;
+    socket.join(room);
+    io.to(socket.id).emit(LOGIN, { message: "LOGIN"});
+    socket.broadcast.to(room).emit(UPDATE, { message: `${name} joined room` });
+  });
 });
