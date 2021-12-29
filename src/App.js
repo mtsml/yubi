@@ -102,7 +102,7 @@ const Action = (props) => {
 
   const [ step, setStep ] = useState(1);
   const [ fromHand, setFromHand ] = useState(null);
-  const [ target, setTarget ] = useState(null);
+  const [ target, setTarget ] = useState(notMeId);
   const [ toHand, setToHand ] = useState(null);
 
   const emitAction = () => {
@@ -116,26 +116,27 @@ const Action = (props) => {
           <p>使う手</p>
           <button
             disabled={me.left === 0}
-            onClick={() => { setFromHand('left'); setStep(2); }}
+            onClick={() => { setFromHand('left'); setStep(3); }}
           >
             左手
           </button>
           <button
             disabled={me.right === 0}
-            onClick={() => { setFromHand('right'); setStep(2); }}
+            onClick={() => { setFromHand('right'); setStep(3); }}
           >
             右手
           </button>
         </>
       }
-      {step === 2 && 
+      {/* 相手への攻撃のみに制限する */}
+      {/* {step === 2 && 
         <>
           <p>攻撃する対象</p>
           <button onClick={() => { setTarget(notMeId); setStep(3); }}>相手</button>
           <button onClick={() => { setTarget(meId); setStep(3); }}>自分</button>
           <button onClick={() => { setStep(1); }}>戻る</button>
         </>
-      }
+      } */}
       {step === 3 &&
         <>
           <p>狙う手</p>
@@ -151,7 +152,7 @@ const Action = (props) => {
           >
             右手
           </button>
-          <button onClick={() => { setStep(2); }}>戻る</button>
+          <button onClick={() => { setStep(1); }}>戻る</button>
         </>
       }
       {step === 4 && 
