@@ -12,7 +12,7 @@ const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || '8090';
 const createSocket = () => {
   console.log('create connection');
-  return io(`${host}:${port}`, {
+  return io(`${host}`, {
     transports: ['websocket']
   })
 };
