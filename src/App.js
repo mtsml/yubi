@@ -7,8 +7,7 @@ const UPDATE = 'UPDATE';
 const ACTION = 'ACTION';
 const END = 'END';
 
-
-const host = process.env.HOST || 'localhost';
+const host = window.location.origin;
 const port = process.env.PORT || '8090';
 const createSocket = () => {
   console.log('create connection');
