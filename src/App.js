@@ -54,7 +54,7 @@ const App = () => {
 
   return (
     <div>
-      <h1>Yubi Game</h1>
+      <h1 className="text-3xl font-bold underline">Yubi Game</h1>
       {
         login
           ? <>
@@ -179,7 +179,7 @@ const Login = () => {
   return (
     <>
       <input label='room' onChange={(e) => handleChange(e)} />
-      <button onClick={() => emitLogin(room)}>Login</button>
+      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => emitLogin(room)}>Login</button>
     </>
   )
 };
