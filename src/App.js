@@ -22,7 +22,7 @@ const App = () => {
   const [ onGame, setOnGame ] = useState(false);
   const [ myTurn, setMyTurn ] = useState(false);
   const [ player, setPlayer ] = useState({});
-  
+
   useEffect(() => {
     socket.on(LOGIN, data => {
       console.log('login')
@@ -45,6 +45,10 @@ const App = () => {
       setPlayer(player);
       alert(winner === socket.id ? '勝ちました' : '負けました');
       setLogin(false);
+      setRoom(null);
+      setOnGame(false);
+      setMyTurn(false);
+      setPlayer({});
     })
   }, [])
 

@@ -65,10 +65,10 @@ io.on('connection', (socket) => {
     const winner = judge(me, meId, notMe, notMeId);
     if (winner) {
       io.to(room).emit(END, { winner, player: rooms[room].player });
+      io.in(room).socketsLeave(room);
       delete rooms[room];
-      socket.leave(room);
     } else {
-      io.to(room).emit(UPDATE, rooms[room]);    
+      io.to(room).emit(UPDATE, rooms[room]);
     }
   });
 });
