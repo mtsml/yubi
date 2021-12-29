@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import io from "socket.io-client";
-
+import yubi from './yubi.png';
 
 const LOGIN = 'LOGIN';
 const UPDATE = 'UPDATE';
@@ -53,16 +53,16 @@ const App = () => {
   }, [])
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Yubi Game</h1>
+    <div className="container px-5 py-24 mx-auto">
+      <h1 className="text-3xl text-center font-bold underline mb-5">Yubi Game</h1>
       {
         login
           ? <>
-              <h2>Room: {room}</h2>
+              <h2 className="text-2xl text-center font-bold mb-5">Room: {room}</h2>
               {
                 onGame
                   ? <GameBorad room={room} player={player} myTurn={myTurn} />
-                  : <p>waiting...</p>
+                  : <p className="text-1xl text-center">waiting...</p>
               }
             </>
           : <Login />
@@ -177,10 +177,19 @@ const Login = () => {
   }
 
   return (
-    <>
-      <input label='room' onChange={(e) => handleChange(e)} />
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => emitLogin(room)}>Login</button>
-    </>
+    <div className="text-center flex flex-col justify-center items-center">
+      <img alt="yubi" src={yubi} />
+      <input
+        className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
+        onChange={(e) => handleChange(e)}
+      />
+      <button
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        onClick={() => emitLogin(room)}
+      >
+        Login
+      </button>
+    </div>
   )
 };
 
