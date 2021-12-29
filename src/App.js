@@ -7,20 +7,18 @@ const UPDATE = 'UPDATE';
 const ACTION = 'ACTION';
 const END = 'END';
 
-const host = window.location.origin;
-const port = process.env.PORT || '8090';
+
+const host = process.env.NODE_ENV === 'production' ? window.location.origin : 'localhost:8090';
 const createSocket = () => {
-  console.log('create connection');
-  return io(`${host}`, {
+  return io(host, {
     transports: ['websocket']
   })
 };
 const socket = createSocket();
 
-
 const App = () => {
   const [ login, setLogin ] = useState(false);
-  const [ room, setRoom ] =useState(null);
+  const [ room, setRoom ] = useState(null);
   const [ onGame, setOnGame ] = useState(false);
   const [ myTurn, setMyTurn ] = useState(false);
   const [ player, setPlayer ] = useState({});
