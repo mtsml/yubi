@@ -8,7 +8,6 @@ app.use(express.static(path.join(__dirname, '..', 'build')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
-
 const port = process.env.PORT || 8090;
 const server = app.listen(port, () => {
     console.log(`server is running on port ${port}`)
@@ -19,34 +18,37 @@ const LOGIN = 'LOGIN';
 const UPDATE = 'UPDATE';
 const ACTION = 'ACTION';
 const END = 'END';
+const ERROR = 'ERROR';
 
 const rooms = {};
-
-
-const io = socket(server, {
-  transports: ['websocket']
-});
+const io = socket(server, { transports: ['websocket'] });
 
 io.on('connection', (socket) => {
   console.log('connection');
 
   socket.on(LOGIN, (data) => {
-    console.log(LOGIN, data)
+    console.log(LOGIN, data);
     const { room } = data;
-
-    joinRoom(socket, room);
-    io.to(socket.id).emit(LOGIN, { room });
-    if (Object.keys(rooms[room].player).length === 2) {
-      io.to(room).emit(UPDATE, rooms[room]);
+    
+    const joined = joinRoom(socket, room);
+    if (joined) {
+      io.to(socket.id).emit(LOGIN);
+      if (Object.keys(rooms[room].player).length === 2) {
+        io.to(room).emit(UPDATE, rooms[room]);
+      }
+    } else {
+      io.to(socket.id).emit(ERROR, { message: '定員オーバーです。。。' });
     }
   });
 
   socket.on(ACTION, (data) => {
-    console.log(ACTION, data)
-    const { room, notMeId, fromHand, target, toHand } = data;
+    console.log(ACTION, data);
+    const { notMeId, fromHand, target, toHand } = data;
+
+    const room = getRoom(socket);
     const player = rooms[room].player;
     const meId = socket.id;
-    const me = player[meId]; 
+    const me = player[meId];
     const notMe = player[notMeId];
 
     // 自分への攻撃
@@ -71,6 +73,16 @@ io.on('connection', (socket) => {
       io.to(room).emit(UPDATE, rooms[room]);
     }
   });
+
+  socket.on('disconnecting', () => {
+    for (const room of socket.rooms) {
+      if (room !== socket.id) {
+        socket.to(room).emit(ERROR, { message: '深刻なエラーが発生しました。。。'});
+        io.in(room).socketsLeave(room);
+        delete rooms[room];
+      }
+    }
+  });
 });
 
 
@@ -78,14 +90,24 @@ const joinRoom = (socket, room) => {
   if (!rooms[room]) {
     rooms[room] = {
       nextPlayer: socket.id,
-      player: {}
+      player: {
+        [socket.id]: {
+          left: 1,
+          right: 1
+        }
+      }
     }
+  } else if (Object.keys(rooms[room].player).length === 1) {
+    rooms[room].player[socket.id] = {
+      left: 1,
+      right: 1
+    };
+    socket.join(room);
+  } else {
+    return false;
   }
-  rooms[room].player[socket.id] = {
-    left: 1,
-    right: 1
-  };
   socket.join(room);
+  return true;
 };
 
 
@@ -98,3 +120,14 @@ const judge = (me, meId, notMe, notMeId) => {
   }
   return false;
 };
+
+
+const getRoom = (socket) => {
+  let room;
+  socket.rooms.forEach(r => {
+    if (r !== socket.id) {
+      room = r;
+    }
+  });
+  return room;
+}

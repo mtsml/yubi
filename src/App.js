@@ -7,60 +7,63 @@ const LOGIN = 'LOGIN';
 const UPDATE = 'UPDATE';
 const ACTION = 'ACTION';
 const END = 'END';
+const ERROR = 'ERROR';
 
 
 const host = process.env.NODE_ENV === 'production' ? window.location.origin : 'localhost:8090';
-const createSocket = () => {
-  return io(host, {
-    transports: ['websocket']
-  })
-};
+const createSocket = () => io(host, {
+  transports: ['websocket']
+});
 const socket = createSocket();
+
 
 const App = () => {
   const [ login, setLogin ] = useState(false);
-  const [ room, setRoom ] = useState(null);
   const [ onGame, setOnGame ] = useState(false);
   const [ myTurn, setMyTurn ] = useState(false);
   const [ player, setPlayer ] = useState({});
 
   useEffect(() => {
-    socket.on(LOGIN, data => {
-      console.log('login')
-      const { room } = data;
-      setRoom(room);
+    socket.on(LOGIN, () => {
+      console.log('login');
       setLogin(true);
     });
 
-    socket.on(UPDATE, data => {
-      console.log('update')
-      const { nextPlayer, player } = data;
+    socket.on(UPDATE, ({ nextPlayer, player }) => {
+      console.log('update');
       setPlayer(player);
       setMyTurn(nextPlayer === socket.id);
       onGame || setOnGame(true);
     })
 
-    socket.on(END, data => {
-      console.log('end')
-      const { winner, player } = data;
+    socket.on(END, ({ winner, player }) => {
+      console.log('end');
       setPlayer(player);
       alert(winner === socket.id ? '勝ちました' : '負けました');
       setLogin(false);
-      setRoom(null);
       setOnGame(false);
       setMyTurn(false);
       setPlayer({});
     })
+
+    socket.on(ERROR, ({ message }) => {
+      console.log('error');
+      alert(message);
+      setLogin(false);
+      setOnGame(false);
+      setMyTurn(false);
+      setPlayer({});      
+    })
   }, [])
 
   return (
-    <div className="container px-5 py-24 mx-auto">
-      <h1 className="text-3xl text-center font-bold underline mb-5">Yubi Game</h1>
+    <div className="container py-5 mx-auto my-auto">
+      <h1 className="text-3xl text-center font-bold underline">Yubi Game</h1>
       {
         login
           ?
             onGame
-              ? <GameBorad room={room} player={player} myTurn={myTurn} />
+              ? <Borad player={player} myTurn={myTurn} />
               : <p className="text-2xl text-center">waiting...</p>
           : <Login />
       }
@@ -72,23 +75,17 @@ const App = () => {
 const Login = () => {
   const [ room, setRoom ] = useState(null);
 
-  const emitLogin = (room) => {
-    socket.emit(LOGIN, { room });
-  }
-  const handleChange = (e) => {
-    setRoom(e.target.value)
-  }
-
   return (
     <div className="text-center flex flex-col justify-center items-center">
       <img alt="logo" src="/image/logo.png" />
       <input
         className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
-        onChange={(e) => handleChange(e)}
+        onChange={(e) => setRoom(e.target.value)}
       />
       <button
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        onClick={() => emitLogin(room)}
+        disabled={!room}
+        onClick={() => socket.emit(LOGIN, { room })}
       >
         Login
       </button>
@@ -97,8 +94,7 @@ const Login = () => {
 };
 
 
-const GameBorad = ({ room, player, myTurn }) => {
-  const [ selected, setSelected ] = useState(false);
+const Borad = ({ player, myTurn }) => {
   const [ actionParam, setActionParam ] = useState(null);
 
   const meId = socket.id;
@@ -106,14 +102,8 @@ const GameBorad = ({ room, player, myTurn }) => {
   const notMeId = Object.keys(player).find(p => p !== socket.id);
   const notMe = player[notMeId];
 
-  const callback = (data) => {
-    console.log('callback')
-    setSelected(true);
-    setActionParam({ room, notMeId, ...data })
-  }
   const emitAction = () => {
     socket.emit(ACTION, actionParam);
-    setSelected(false);
     setActionParam(null);
   }
 
@@ -142,7 +132,7 @@ const GameBorad = ({ room, player, myTurn }) => {
           name={`meLeft${me.left}`}
           canDrag={myTurn && me.left !== 0}
           canDrop={myTurn && me.left !== 0}
-          callback={callback}
+          callback={(data) => { setActionParam({ notMeId, ...data })}}
         />
         <Hand
           id={meId}
@@ -150,14 +140,14 @@ const GameBorad = ({ room, player, myTurn }) => {
           name={`meRight${me.right}`}
           canDrag={myTurn && me.right !== 0}
           canDrop={myTurn && me.right !== 0}
-          callback={callback}
+          callback={(data) => { setActionParam({ notMeId, ...data })}}
         />
       </div>
       {
         myTurn
           ? <div className="text-center">
               <p className="ext-2xl">Drag and Drop!!</p>
-              {selected && 
+              {actionParam && 
                 <button 
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   onClick={emitAction}
@@ -173,7 +163,6 @@ const GameBorad = ({ room, player, myTurn }) => {
 
 
 const Hand = ({ id, hand, name, canDrag, canDrop, callback }) => {
-
   // ドラッグ設定
   const [, drag] = useDrag({
     type: 'HAND',
