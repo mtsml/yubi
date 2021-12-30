@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useDrag, useDrop } from 'react-dnd';
 import io from "socket.io-client";
-import yubi from './yubi.png';
+
 
 const LOGIN = 'LOGIN';
 const UPDATE = 'UPDATE';
@@ -57,14 +58,10 @@ const App = () => {
       <h1 className="text-3xl text-center font-bold underline mb-5">Yubi Game</h1>
       {
         login
-          ? <>
-              <h2 className="text-2xl text-center font-bold mb-5">Room: {room}</h2>
-              {
-                onGame
-                  ? <GameBorad room={room} player={player} myTurn={myTurn} />
-                  : <p className="text-1xl text-center">waiting...</p>
-              }
-            </>
+          ?
+            onGame
+              ? <GameBorad room={room} player={player} myTurn={myTurn} />
+              : <p className="text-2xl text-center">waiting...</p>
           : <Login />
       }
     </div>
@@ -72,102 +69,8 @@ const App = () => {
 }
 
 
-const GameBorad = (props) => {
-  const { room, player, myTurn } = props;
-  const meId = socket.id;
-  const me = player[meId];
-  const notMeId = Object.keys(player).find(p => p !== socket.id);
-  const notMe = player[notMeId];
-
-  return (
-    <div>
-      <div>
-        <p>相手</p>
-        左手{notMe.left}
-        右手{notMe.right}
-      </div>
-      <div>
-        <p>自分</p>
-        左手{me.left}
-        右手{me.right}
-      </div>
-      {myTurn && <Action room={room} me={me} meId={meId} notMe={notMe} notMeId={notMeId} />}
-    </div>
-  )
-};
-
-
-const Action = (props) => {
-  const { room, me, meId, notMe, notMeId } = props;
-
-  const [ step, setStep ] = useState(1);
-  const [ fromHand, setFromHand ] = useState(null);
-  const [ target, setTarget ] = useState(notMeId);
-  const [ toHand, setToHand ] = useState(null);
-
-  const emitAction = () => {
-    socket.emit(ACTION, { room, notMeId, fromHand, target, toHand });
-  }
-
-  return (
-    <>
-      {step === 1 && 
-        <>
-          <p>使う手</p>
-          <button
-            disabled={me.left === 0}
-            onClick={() => { setFromHand('left'); setStep(3); }}
-          >
-            左手
-          </button>
-          <button
-            disabled={me.right === 0}
-            onClick={() => { setFromHand('right'); setStep(3); }}
-          >
-            右手
-          </button>
-        </>
-      }
-      {/* 相手への攻撃のみに制限する */}
-      {/* {step === 2 && 
-        <>
-          <p>攻撃する対象</p>
-          <button onClick={() => { setTarget(notMeId); setStep(3); }}>相手</button>
-          <button onClick={() => { setTarget(meId); setStep(3); }}>自分</button>
-          <button onClick={() => { setStep(1); }}>戻る</button>
-        </>
-      } */}
-      {step === 3 &&
-        <>
-          <p>狙う手</p>
-          <button 
-            disabled={notMe.left === 0}
-            onClick={() => { setToHand('left'); setStep(4); }}
-          >
-            左手
-          </button>
-          <button 
-            disabled={notMe.right === 0}
-            onClick={() => { setToHand('right'); setStep(4); }}
-          >
-            右手
-          </button>
-          <button onClick={() => { setStep(1); }}>戻る</button>
-        </>
-      }
-      {step === 4 && 
-        <>
-          <p>確認</p>
-          <button onClick={emitAction}>OK</button>
-          <button onClick={() => { setStep(3); }}>戻る</button>
-        </>
-      }
-    </>
-  )    
-}
-
 const Login = () => {
-  const [ room, setRoom ] = useState(null); 
+  const [ room, setRoom ] = useState(null);
 
   const emitLogin = (room) => {
     socket.emit(LOGIN, { room });
@@ -178,7 +81,7 @@ const Login = () => {
 
   return (
     <div className="text-center flex flex-col justify-center items-center">
-      <img alt="yubi" src={yubi} />
+      <img alt="logo" src="/image/logo.png" />
       <input
         className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
         onChange={(e) => handleChange(e)}
@@ -192,5 +95,114 @@ const Login = () => {
     </div>
   )
 };
+
+
+const GameBorad = ({ room, player, myTurn }) => {
+  const [ selected, setSelected ] = useState(false);
+  const [ actionParam, setActionParam ] = useState(null);
+
+  const meId = socket.id;
+  const me = player[meId];
+  const notMeId = Object.keys(player).find(p => p !== socket.id);
+  const notMe = player[notMeId];
+
+  const callback = (data) => {
+    console.log('callback')
+    setSelected(true);
+    setActionParam({ room, notMeId, ...data })
+  }
+  const emitAction = () => {
+    socket.emit(ACTION, actionParam);
+    setSelected(false);
+    setActionParam(null);
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-center my-1">
+        <Hand
+          id={notMeId}
+          hand="right"
+          name={`notMeRight${notMe.right}`}
+          canDrag={false}
+          canDrop={myTurn && notMe.right !== 0}
+        />
+        <Hand
+          id={notMeId}
+          hand="left"
+          name={`notMeLeft${notMe.left}`}
+          canDrag={false}
+          canDrop={myTurn && notMe.left !== 0}
+        />
+      </div>
+      <div className="flex items-center justify-center my-1">
+        <Hand
+          id={meId}
+          hand="left"
+          name={`meLeft${me.left}`}
+          canDrag={myTurn && me.left !== 0}
+          canDrop={myTurn && me.left !== 0}
+          callback={callback}
+        />
+        <Hand
+          id={meId}
+          hand="right"
+          name={`meRight${me.right}`}
+          canDrag={myTurn && me.right !== 0}
+          canDrop={myTurn && me.right !== 0}
+          callback={callback}
+        />
+      </div>
+      {
+        myTurn
+          ? <div className="text-center">
+              <p className="ext-2xl">Drag and Drop!!</p>
+              {selected && 
+                <button 
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={emitAction}
+                >
+                  OK
+                </button>}
+            </div>
+          : <p className="ext-2xl text-center">waiting...</p>
+      }
+    </div>
+  )
+};
+
+
+const Hand = ({ id, hand, name, canDrag, canDrop, callback }) => {
+
+  // ドラッグ設定
+  const [, drag] = useDrag({
+    type: 'HAND',
+    canDrag: (_) => canDrag,
+    end: (_, monitor) => {
+      const dropResult = monitor.getDropResult();
+      // TODO: 自分への攻撃を実装する
+      if (dropResult && name !== dropResult.name && id !== dropResult.id) {
+        callback({
+          fromHand: hand, 
+          target: dropResult.id,
+          toHand: dropResult.hand
+        });
+      }
+    }
+  });
+  // ドロップ設定
+  const [, drop] = useDrop({
+    accept: 'HAND',
+    canDrop: (_,) => canDrop,
+    drop: () => ({ id, name, hand }),
+  });
+
+  return (
+    <div ref={drop}>
+      <img ref={drag} alt={name} src={`/image/${name}.png`} />
+    </div>
+  );
+};
+
 
 export default App;
