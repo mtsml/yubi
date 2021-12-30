@@ -58,14 +58,12 @@ const App = () => {
 
   return (
     <div className="container py-5 mx-auto my-auto">
-      <h1 className="text-3xl text-center font-bold underline">Yubi Game</h1>
-      {
-        login
-          ?
-            onGame
-              ? <Borad player={player} myTurn={myTurn} />
-              : <p className="text-2xl text-center">waiting...</p>
-          : <Login />
+      <h1 className="text-3xl text-center font-bold underline">YubiGame</h1>
+      {login
+        ? onGame
+          ? <Board player={player} myTurn={myTurn} />
+          : <p className="text-2xl text-center mt-3">挑戦者求ム...</p>
+        : <Login />
       }
     </div>
   )
@@ -79,7 +77,8 @@ const Login = () => {
     <div className="text-center flex flex-col justify-center items-center">
       <img alt="logo" src="/image/logo.png" />
       <input
-        className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out"
+        className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 mb-2 leading-8 transition-colors duration-200 ease-in-out"
+        placeholder="ルーム名"
         onChange={(e) => setRoom(e.target.value)}
       />
       <button
@@ -87,14 +86,14 @@ const Login = () => {
         disabled={!room}
         onClick={() => socket.emit(LOGIN, { room })}
       >
-        Login
+        入出
       </button>
     </div>
   )
 };
 
 
-const Borad = ({ player, myTurn }) => {
+const Board = ({ player, myTurn }) => {
   const [ actionParam, setActionParam ] = useState(null);
 
   const meId = socket.id;
@@ -105,7 +104,7 @@ const Borad = ({ player, myTurn }) => {
   const emitAction = () => {
     socket.emit(ACTION, actionParam);
     setActionParam(null);
-  }
+  };
 
   return (
     <div>
@@ -145,17 +144,25 @@ const Borad = ({ player, myTurn }) => {
       </div>
       {
         myTurn
-          ? <div className="text-center">
-              <p className="ext-2xl">Drag and Drop!!</p>
-              {actionParam && 
-                <button 
-                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                  onClick={emitAction}
-                >
-                  OK
-                </button>}
+          ? <div className=" flex flex-col justify-center items-center">
+              <p className="text-2xl">ドラッグ＆ドロップで攻撃！</p>
+              {actionParam &&
+                <>
+                  <p className="text-2xl my-2">
+                    {`${{ left: '左手', right: '右手' }[actionParam.fromHand]}
+                    →
+                    ${{ left: '左手', right: '右手' }[actionParam.toHand]}`}
+                  </p>
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onClick={emitAction}
+                  >
+                    OK
+                  </button>
+                </>
+              }
             </div>
-          : <p className="ext-2xl text-center">waiting...</p>
+          : <p className="text-2xl text-center">相手が悩み中...</p>
       }
     </div>
   )

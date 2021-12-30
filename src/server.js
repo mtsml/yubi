@@ -102,7 +102,6 @@ const joinRoom = (socket, room) => {
       left: 1,
       right: 1
     };
-    socket.join(room);
   } else {
     return false;
   }
