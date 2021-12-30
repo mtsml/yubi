@@ -188,7 +188,7 @@ const Hand = ({ id, hand, name, canDrag, canDrop, callback }) => {
 
   return (
     <div ref={drop}>
-      <img ref={drag} alt={name} src={`/image/${name}.png`} oncontextmenu="return false" />
+      <img ref={drag} alt={name} src={`/image/${name}.png`} onContextMenu="return false" />
     </div>
   );
 };
