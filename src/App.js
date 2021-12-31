@@ -34,7 +34,7 @@ const App = () => {
       setPlayer(player);
       setMyTurn(nextPlayer === socket.id);
       onGame || setOnGame(true);
-    })
+    });
 
     socket.on(END, ({ winner, player }) => {
       console.log('end');
@@ -44,7 +44,7 @@ const App = () => {
       setOnGame(false);
       setMyTurn(false);
       setPlayer({});
-    })
+    });
 
     socket.on(ERROR, ({ message }) => {
       console.log('error');
@@ -53,7 +53,7 @@ const App = () => {
       setOnGame(false);
       setMyTurn(false);
       setPlayer({});      
-    })
+    });
   }, [])
 
   return (
@@ -76,18 +76,20 @@ const Login = () => {
   return (
     <div className="text-center flex flex-col justify-center items-center">
       <img alt="logo" src="/image/logo.png" />
-      <input
-        className="bg-gray-100 bg-opacity-50 rounded border border-gray-300 focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-200 text-base outline-none text-gray-700 py-1 px-3 mb-2 leading-8 transition-colors duration-200 ease-in-out"
-        placeholder="ルーム名"
-        onChange={(e) => setRoom(e.target.value)}
-      />
-      <button
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        disabled={!room}
-        onClick={() => socket.emit(LOGIN, { room })}
-      >
-        入出
-      </button>
+      <div className="flex items-center border-b border-blue-500 py-2">
+        <input
+          className="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
+          placeholder="Room Name"
+          onChange={(e) => setRoom(e.target.value)}
+        />
+        <button
+          className="flex-shrink-0 bg-blue-500 hover:bg-blue-700 border-blue-500 hover:border-blue-700 text-sm border-4 text-white py-1 px-2 rounded"
+          disabled={!room}
+          onClick={() => socket.emit(LOGIN, { room })}
+        >
+          Join
+        </button>
+      </div>
     </div>
   )
 };
@@ -195,7 +197,7 @@ const Hand = ({ id, hand, name, canDrag, canDrop, callback }) => {
 
   return (
     <div ref={drop}>
-      <img ref={drag} alt={name} src={`/image/${name}.png`} onContextMenu="return false" />
+      <img ref={drag} alt={name} src={`/image/${name}.png`} />
     </div>
   );
 };
