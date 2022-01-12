@@ -52,7 +52,7 @@ const App = () => {
       setLogin(false);
       setOnGame(false);
       setMyTurn(false);
-      setPlayer({});      
+      setPlayer({});
     });
   }, [])
 
@@ -79,7 +79,7 @@ const Login = () => {
       <div className="flex items-center border-b border-blue-500 py-2">
         <input
           className="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
-          placeholder="Room Name"
+          placeholder="部屋の名前"
           onChange={(e) => setRoom(e.target.value)}
         />
         <button
@@ -87,7 +87,7 @@ const Login = () => {
           disabled={!room}
           onClick={() => socket.emit(LOGIN, { room })}
         >
-          Join
+          参加
         </button>
       </div>
     </div>
@@ -147,7 +147,7 @@ const Board = ({ player, myTurn }) => {
       {
         myTurn
           ? <div className=" flex flex-col justify-center items-center">
-              <p className="text-2xl">ドラッグ＆ドロップで攻撃！</p>
+              <p className="text-2xl">自分のターン</p>
               {actionParam &&
                 <>
                   <p className="text-2xl my-2">
@@ -164,7 +164,7 @@ const Board = ({ player, myTurn }) => {
                 </>
               }
             </div>
-          : <p className="text-2xl text-center">相手が悩み中...</p>
+          : <p className="text-2xl text-center">相手のターン</p>
       }
     </div>
   )
@@ -181,7 +181,7 @@ const Hand = ({ id, hand, name, canDrag, canDrop, callback }) => {
       // TODO: 自分への攻撃を実装する
       if (dropResult && name !== dropResult.name && id !== dropResult.id) {
         callback({
-          fromHand: hand, 
+          fromHand: hand,
           target: dropResult.id,
           toHand: dropResult.hand
         });
