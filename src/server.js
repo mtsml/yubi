@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
 
   socket.on(ACTION, (data) => {
     console.log(ACTION, data);
-    const { notMeId, fromHand, target, toHand } = data;
+    const { notMeId, targetId, newLeftHand, newRightHand } = data;
 
     const room = getRoom(socket);
     const player = rooms[room].player;
@@ -51,18 +51,9 @@ io.on('connection', (socket) => {
     const me = player[meId];
     const notMe = player[notMeId];
 
-    // 自分への攻撃
-    if (meId === target) {
-        
-    }
-    // 相手への攻撃
-    else {
-      const fromHandNumber = me[fromHand];
-      const toHandNumber = notMe[toHand];
-      const newHandNumber = (fromHandNumber + toHandNumber) % 5;
-      rooms[room].player[notMeId][toHand] = newHandNumber;
-      rooms[room].nextPlayer = notMeId;
-    }
+    rooms[room].player[targetId].left = newLeftHand;
+    rooms[room].player[targetId].right = newRightHand;
+    rooms[room].nextPlayer = notMeId;
 
     const winner = judge(me, meId, notMe, notMeId);
     if (winner) {
